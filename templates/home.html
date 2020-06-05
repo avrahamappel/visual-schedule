@@ -9,20 +9,14 @@
 </head>
 <body>
 
-<h1>My Calendars</h1>
-
-<ul>
-    {% for name, events in calendars %}
-    <li>
-        <div><h3>{{ name }}</h3></div>
-        <div>
-            {% for event in events %}
-            {{ event }}
-            {% endfor %}
-        </div>
-    </li>
+<div>
+    <h1>{{ schedule.name }}</h1>
+</div>
+<div>
+    {% for event in schedule.events %}
+    {{ event.name }} ({{ event.range() }})
     {% endfor %}
-</ul>
+</div>
 
 </body>
 </html>
