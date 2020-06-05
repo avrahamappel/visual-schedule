@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -12,6 +12,4 @@ def home():
         'ical-url.com'
     ]
 
-    return '''My calendars:
-{}
-'''.format(calendars)
+    return render_template('home.html', calendars=calendars)
