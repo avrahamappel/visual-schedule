@@ -39,16 +39,39 @@ def todays_events(cal: i.Calendar) -> [i.Event]:
 
 
 def is_today(event: i.Event) -> bool:
-    return True
+    return event_occurs_on_day(event, datetime.now())
 
 
-def event_occurs_on_day(event: i.Event, day) -> bool:
-    # if recurring
-    # AND recurs on this day of the week etc.
-    # AND start is before today and end is after today (if they exist)
+def event_occurs_on_day(event: i.Event, day: datetime) -> bool:
+    if not event['rrule']:
+        return event.decoded('dtstart') > day
 
-    # OR date is today
-    pass
+    # Now we now the event is recurring
+
+    # if end and end is before today (for VEVENTS check UNTIL or COUNT)
+    #     return False
+
+    frequency = event['rrule']['freq'][0]
+
+    if frequency == 'DAILY':
+        return True
+
+    if frequency == 'WEEKLY':
+        return int_to_weekday_str(day.weekday()) in event['rrule']['byday']
+
+    return False
+
+
+def int_to_weekday_str(day: int) -> str:
+    return {
+        0: 'MO',
+        1: 'TU',
+        2: 'WE',
+        3: 'TH',
+        4: 'FR',
+        5: 'SA',
+        6: 'SU',
+    }[day]
 
 
 def get_cal_from_link(link: str) -> i.Calendar:
