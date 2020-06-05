@@ -12,8 +12,15 @@
 <h1>My Calendars</h1>
 
 <ul>
-    {% for cal in calendars %}
-    <li>{{ cal }}</li>
+    {% for name, events in calendars %}
+    <li>
+        <div><h3>{{ name }}</h3></div>
+        <div>
+            {% for event in events %}
+            {{ event }}
+            {% endfor %}
+        </div>
+    </li>
     {% endfor %}
 </ul>
 
