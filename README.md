@@ -4,6 +4,6 @@ A visual schedule arranged around a 24-hour clock to help my small children unde
 
 ## To do
 
-[] Download calendar events and display events for the current day
-[] Show 24 hour clock on page
+[x] Download calendar events and display events for the current day
+[x] Show 24 hour clock on page
 [] Show events around the clock
