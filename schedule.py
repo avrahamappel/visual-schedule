@@ -1,20 +1,24 @@
+import random
 import icalendar as i
 import urllib.request as r
 from datetime import datetime
 
 
 class Event:
-    name = ''
-    start_time = None
-    end_time = None
+    colors = ['red', 'blue', 'green', 'yellow']
 
-    def __init__(self, name: str, start_time, end_time):
-        self.name = name
-        self.start_time: datetime = start_time
-        self.end_time: datetime = end_time
+    def __init__(self, title: str, start_time, end_time, color: str = None):
+        self.title = title
+        self.color = color or self.new_color()
+        self.start_time = start_time.hour if type(start_time) is 'datetime' else start_time
+        self.end_time = end_time.hour if type(end_time) is 'datetime' else end_time
 
     def range(self) -> str:
         return '{:%I:%M%p} - {:%I:%M%p}'.format(self.start_time, self.end_time)
+
+    def new_color(self):
+        random.seed(30)
+        return random.choice(self.colors)
 
 
 class VisualSchedule:

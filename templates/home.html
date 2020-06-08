@@ -1,12 +1,15 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div>
-    <h1>{{ schedule.name }}</h1>
-</div>
-<div>
-    {% for event in schedule.events %}
-    {{ event.name }} ({{ event.range() }})
-    {% endfor %}
-</div>
+<h2>See your daily visual schedule</h2>
+
+<p>To get started, enter the ICalendar link to your online calendar.</p>
+
+<form action="{{ url_for('pie') }}" method="get">
+    <label>
+        <input type="url" name="link">
+    </label>
+
+    <button type="submit">View schedule</button>
+</form>
 {% endblock %}
