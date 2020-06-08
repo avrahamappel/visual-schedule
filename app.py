@@ -20,14 +20,9 @@ def home():
 def pie():
     schedule_items = [
         # (title, start_time, end_time, color)
-        ('Sleep', 4, 5, 'cyan'),
-        ('Sleep', 5, 6, 'pink'),
-        ('Sleep', 6, 7, 'yellow'),
-        ('Sleep', 7, 8, 'red'),
-        ('Sleep', 8, 9, 'blue'),
-        ('Sleep', 9, 10, 'green'),
         ('Shiur', 10, 11, 'blue'),
         ('English', 12, 13, 'red'),
+        ('Sleep', 20, 32, 'cyan'),
     ]
 
     mapped = map(schedule_to_stroke, schedule_items)
@@ -36,26 +31,16 @@ def pie():
 
 
 def schedule_to_stroke(schedule):
-    # start end -> stroke-dasharray
-    # before% length% after%
-    # each hour is (100/24)% of the day
-    # offset is negative, and add +25
-    # length is (end - start)*(hour formula)
-    # after is 100 - (before + length)
-
     title, start, end, color = schedule
 
-    before = -hour_to_percent(start) + 25
-    length = hour_to_percent(end - start)
-    after = 100 - (before + length)
+    # offset is negative, and add +25
+    offset = -hour_to_percent(start) + 25
 
-    return (
-        title,
-        before,
-        length,
-        after,
-        color
-    )
+    length = hour_to_percent(end - start)
+
+    after = 100 - length
+
+    return title, offset, length, after, color
 
 
 def hour_to_percent(val):
