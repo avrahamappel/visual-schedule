@@ -25,7 +25,7 @@ def pie():
         ('Sleep', 20, 32, 'cyan'),
     ]
 
-    mapped = map(schedule_to_stroke, schedule_items)
+    mapped = list(map(schedule_to_stroke, schedule_items))
 
     return render_template('pie.html', schedule_items=mapped)
 

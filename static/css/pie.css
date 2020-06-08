@@ -1,0 +1,57 @@
+/* Pie SVG code and CSS from https://medium.com/@heyoka/scratch-made-svg-donut-pie-charts-in-html5-2c587e935d72 */
+
+@import url(https://fonts.googleapis.com/css?family=Montserrat:400);
+
+body {
+  font: 16px/1.4em "Montserrat", Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  justify-content: space-around;
+  flex-direction: column;
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+  }
+}
+
+.container > * {
+  flex: 1;
+  padding-left: 15px;
+  padding-right: 15px;
+  align-self: center;
+}
+
+.legend {
+  min-width: calc(8 / 12);
+}
+
+.legend [class*="shape-"] {
+  margin-right: 6px;
+}
+
+.legend-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-list li {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.shape-circle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 32px;
+  height: 32px;
+  -webkit-border-radius: 50%;
+     -moz-border-radius: 50%;
+          border-radius: 50%;
+}
