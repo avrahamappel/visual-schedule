@@ -1,7 +1,9 @@
 import random
-import icalendar as i
 import urllib.request as r
 from datetime import datetime
+
+import pytz
+import icalendar as i
 
 
 class Event:
@@ -39,16 +41,16 @@ def new_event(event: i.Event):
 
 
 def todays_events(cal: i.Calendar) -> [i.Event]:
-    return [new_event(event) for event in cal.walk('vevent') if is_today(event)]
+    return [new_event(event) for event in cal.walk('vevent') if is_today(event, cal)]
 
 
-def is_today(event: i.Event) -> bool:
-    return event_occurs_on_day(event, datetime.now())
+def is_today(event: i.Event, tz=pytz.utc) -> bool:
+    return event_occurs_on_day(event, datetime.now(tz=tz))
 
 
 def event_occurs_on_day(event: i.Event, day: datetime) -> bool:
-    if not event['rrule']:
-        return event.decoded('dtstart') > day
+    if 'rrule' not in event:
+        return event.decoded('dtstart') < day
 
     # Now we now the event is recurring
 
