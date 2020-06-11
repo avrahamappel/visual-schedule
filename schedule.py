@@ -24,11 +24,12 @@ class Event:
 
 
 class VisualSchedule:
-    name = ''
+    title = ''
     events: [Event] = []
 
-    def __init__(self, name: str, events: [Event]):
-        self.name = name
+    def __init__(self, title: str, tz: datetime.tzinfo, events: [Event]):
+        self.title = title
+        self.tz = tz or pytz.UTC
         self.events = events
 
 
@@ -40,8 +41,15 @@ def new_event(event: i.Event):
     )
 
 
+def get_cal_tz(cal: i.Calendar) -> pytz.tzinfo:
+    try:
+        return cal.walk('vtimezone')[0].to_tz()
+    except KeyError:
+        return None
+
+
 def todays_events(cal: i.Calendar) -> [i.Event]:
-    return [new_event(event) for event in cal.walk('vevent') if is_today(event, cal)]
+    return [new_event(event) for event in cal.walk('vevent') if is_today(event, get_cal_tz(cal))]
 
 
 def is_today(event: i.Event, tz=pytz.utc) -> bool:
@@ -88,4 +96,4 @@ def get_cal_from_link(link: str) -> i.Calendar:
 
 def get_schedule_from_link(link: str) -> VisualSchedule:
     cal = get_cal_from_link(link)
-    return VisualSchedule(cal.get('X-WR-CALNAME'), todays_events(cal))
+    return VisualSchedule(cal.get('X-WR-CALNAME'), get_cal_tz(cal), todays_events(cal))

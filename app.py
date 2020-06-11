@@ -1,5 +1,9 @@
+from datetime import datetime
+from math import floor
+
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, abort
+
 from schedule import get_schedule_from_link, Event
 
 load_dotenv()
@@ -12,18 +16,23 @@ def home():
     return render_template('home.html')
 
 
-@app.route('/pie')
-def pie():
+@app.route('/schedule')
+def schedule():
     calendar_link = request.args.get('link')
 
     if not calendar_link:
         abort(422, 'Invalid calendar link supplied')
 
-    schedule = get_schedule_from_link(calendar_link)
+    scdl = get_schedule_from_link(calendar_link)
 
-    schedule_items = list(map(event_to_stroke, schedule.events))
+    schedule_items = list(map(event_to_stroke, scdl.events))
 
-    return render_template('pie.html', schedule=schedule, schedule_items=schedule_items)
+    initial_rotation = time_to_degrees(datetime.now(tz=scdl.tz))
+
+    return render_template('schedule.html',
+                           schedule=scdl,
+                           schedule_items=schedule_items,
+                           initial_rotation=initial_rotation)
 
 
 def event_to_stroke(event: Event):
@@ -41,3 +50,7 @@ def event_to_stroke(event: Event):
 
 def hour_to_percent(val):
     return val * (100 / 24)
+
+
+def time_to_degrees(time: datetime) -> int:
+    return floor((((time.hour * 60) + time.minute) * 360) / 1440)

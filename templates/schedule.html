@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block styles %}
+<style>
+/* Pie SVG code and CSS from https://medium.com/@heyoka/scratch-made-svg-donut-pie-charts-in-html5-2c587e935d72 */
+
+@import url(https://fonts.googleapis.com/css?family=Montserrat:400);
+
+body {
+  font: 16px/1.4em "Montserrat", Arial, sans-serif;
+}
+
+.container {
+  display: flex;
+  justify-content: space-around;
+  flex-direction: column;
+  margin-left: -15px;
+  margin-right: -15px;
+}
+
+@media (min-width: 768px) {
+  .container {
+    flex-direction: row;
+  }
+}
+
+.container > * {
+  flex: 1;
+  padding-left: 15px;
+  padding-right: 15px;
+  align-self: center;
+}
+
+.legend {
+  min-width: calc(8 / 12);
+}
+
+.legend [class*="shape-"] {
+  margin-right: 6px;
+}
+
+.legend-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.legend-list li {
+  margin: 0 0 8px;
+  padding: 0;
+}
+
+.shape-circle {
+  display: inline-block;
+  vertical-align: middle;
+  width: 32px;
+  height: 32px;
+  -webkit-border-radius: 50%;
+     -moz-border-radius: 50%;
+          border-radius: 50%;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+
+    <div class="schedule">
+        <h1>Today's Schedule for "{{ schedule.title }}"</h1>
+
+        <svg width="100%" height="100%" viewBox="0 0 42 42" class="donut">
+            <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
+            <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="10"></circle>
+
+            {% for _, offset, length, after, color in schedule_items %}
+            <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent"
+                  stroke="{{ color }}" stroke-width="10"
+                  stroke-dasharray="{{ length }} {{ after }}"
+                  stroke-dashoffset="{{ offset }}"></circle>
+            {% endfor %}
+
+            <line id="hand" x1="21" y1="21" x2="21" y2="1" stroke="#d2d3d4" transform="rotate({{ initial_rotation }} 21 21)"/>
+        </svg>
+    </div>
+
+    <div class="legend">
+        <ul class="legend-list">
+            {% for title, _, _, _, color in schedule_items %}
+            <li><span class="shape-circle" style="background-color:{{ color }}"></span> {{ title }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    setInterval(() => {
+        // TODO rotate dynamically (maybe move function to here)
+    }, 1000)
+</script>
+{% endblock %}
