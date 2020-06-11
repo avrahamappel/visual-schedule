@@ -1,7 +1,7 @@
 import random
 import urllib.request as r
 import datetime as d
-from typing import Optional
+from typing import Optional, List
 
 import pytz
 import icalendar as i
@@ -25,54 +25,51 @@ class Event:
 
 
 class VisualSchedule:
-    title = ''
-    events: [Event] = []
-
-    def __init__(self, title: str, tz: d.tzinfo, events: [Event]):
+    def __init__(self, title: str, tz: d.tzinfo, events: List[Event]):
         self.title = title
         self.tz = tz or pytz.UTC
         self.events = events
 
 
-def new_event(event: i.Event):
+def vevent_to_event(vevent: i.Event):
     return Event(
-        event.get('summary'),
-        event.decoded('dtstart'),
-        event.decoded('dtend')
+        vevent.get('summary'),
+        vevent.decoded('dtstart'),
+        vevent.decoded('dtend')
     )
 
 
-def get_cal_tz(cal: i.Calendar) -> Optional[d.tzinfo]:
+def get_cal_tz(ical: i.Calendar) -> Optional[d.tzinfo]:
     try:
-        return cal.walk('vtimezone')[0].to_tz()
+        return ical.walk('vtimezone')[0].to_tz()
     except KeyError:
         return None
 
 
-def todays_events(cal: i.Calendar) -> [i.Event]:
-    return [new_event(event) for event in cal.walk('vevent') if is_today(event, get_cal_tz(cal))]
+def todays_events(ical: i.Calendar) -> List[i.Event]:
+    return [vevent_to_event(vevent) for vevent in ical.walk('vevent') if is_today(vevent, get_cal_tz(ical))]
 
 
-def is_today(event: i.Event, tz=pytz.UTC) -> bool:
-    return event_occurs_on_day(event, d.datetime.now(tz=tz))
+def is_today(vevent: i.Event, tz=pytz.UTC) -> bool:
+    return event_occurs_on_day(vevent, d.datetime.now(tz=tz))
 
 
-def event_occurs_on_day(event: i.Event, day: d.datetime) -> bool:
-    if 'rrule' not in event:
-        return event.decoded('dtstart') < day
+def event_occurs_on_day(vevent: i.Event, day: d.datetime) -> bool:
+    if 'rrule' not in vevent:
+        return vevent.decoded('dtstart') < day
 
     # Now we now the event is recurring
 
     # if end and end is before today (for VEVENTS check UNTIL or COUNT)
     #     return False
 
-    frequency = event['rrule']['freq'][0]
+    frequency = vevent['rrule']['freq'][0]
 
     if frequency == 'DAILY':
         return True
 
     if frequency == 'WEEKLY':
-        return int_to_weekday_str(day.weekday()) in event['rrule']['byday']
+        return int_to_weekday_str(day.weekday()) in vevent['rrule']['byday']
 
     return False
 
@@ -89,12 +86,12 @@ def int_to_weekday_str(day: int) -> str:
     }[day]
 
 
-def get_cal_from_link(link: str) -> i.Calendar:
+def get_ical_from_link(link: str) -> i.Calendar:
     # Download the calendar and display today's events
     res = r.urlopen(link)
     return i.Calendar.from_ical(res.read())
 
 
 def get_schedule_from_link(link: str) -> VisualSchedule:
-    cal = get_cal_from_link(link)
-    return VisualSchedule(cal.get('X-WR-CALNAME'), get_cal_tz(cal), todays_events(cal))
+    ical = get_ical_from_link(link)
+    return VisualSchedule(ical.get('X-WR-CALNAME'), get_cal_tz(ical), todays_events(ical))
