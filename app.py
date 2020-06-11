@@ -1,10 +1,8 @@
-from datetime import datetime
-from math import floor
-
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, abort
 
 from schedule import get_schedule_from_link, Event
+
 
 load_dotenv()
 
@@ -25,14 +23,11 @@ def schedule():
 
     scdl = get_schedule_from_link(calendar_link)
 
-    schedule_items = list(map(event_to_stroke, scdl.events))
-
-    initial_rotation = time_to_degrees(datetime.now(tz=scdl.tz))
+    pie_strokes = list(map(event_to_stroke, scdl.events))
 
     return render_template('schedule.html',
                            schedule=scdl,
-                           schedule_items=schedule_items,
-                           initial_rotation=initial_rotation)
+                           pie_strokes=pie_strokes)
 
 
 def event_to_stroke(event: Event):
@@ -45,12 +40,8 @@ def event_to_stroke(event: Event):
 
     after = 100 - length
 
-    return event.title, offset, length, after, event.color
+    return offset, length, after, event.color
 
 
 def hour_to_percent(val):
     return val * (100 / 24)
-
-
-def time_to_degrees(time: datetime) -> int:
-    return floor((((time.hour * 60) + time.minute) * 360) / 1440)

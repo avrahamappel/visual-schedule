@@ -72,21 +72,21 @@ body {
             <circle class="donut-hole" cx="21" cy="21" r="15.91549430918954" fill="#fff"></circle>
             <circle class="donut-ring" cx="21" cy="21" r="15.91549430918954" fill="transparent" stroke="#d2d3d4" stroke-width="10"></circle>
 
-            {% for _, offset, length, after, color in schedule_items %}
+            {% for offset, length, after, color in pie_strokes %}
             <circle class="donut-segment" cx="21" cy="21" r="15.91549430918954" fill="transparent"
                   stroke="{{ color }}" stroke-width="10"
                   stroke-dasharray="{{ length }} {{ after }}"
                   stroke-dashoffset="{{ offset }}"></circle>
             {% endfor %}
 
-            <line id="hand" x1="21" y1="21" x2="21" y2="1" stroke="#d2d3d4" transform="rotate({{ initial_rotation }} 21 21)"/>
+            <rect id="hand" x="21" y="21" height="15" width="0.25" rx="1" stroke="#000"></rect>
         </svg>
     </div>
 
     <div class="legend">
         <ul class="legend-list">
-            {% for title, _, _, _, color in schedule_items %}
-            <li><span class="shape-circle" style="background-color:{{ color }}"></span> {{ title }}</li>
+            {% for e in schedule.events %}
+            <li><span class="shape-circle" style="background-color:{{ e.color }}"></span> {{ e.title }} {{ e.range() }}</li>
             {% endfor %}
         </ul>
     </div>
@@ -94,9 +94,24 @@ body {
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.26.0/moment.min.js"></script>
+<script src="{{ url_for('static', filename='/js/moment-timezone-with-data-10-year-range.min.js') }}"></script>
 <script>
-    setInterval(() => {
-        // TODO rotate dynamically (maybe move function to here)
-    }, 1000)
+    const TIMEZONE = '{{ schedule.tz }}';
+
+    const timeToDegrees = (minutes) => Math.floor((minutes * 360) / 1440);
+
+    const currentMinutes = () => {
+        const m = moment.tz(TIMEZONE);
+        return (m.hours() * 60) + m.minutes()
+    };
+
+    const rotateHand = () => {
+        const rotation = timeToDegrees(currentMinutes()) - 180;
+        document.getElementById('hand').setAttribute('transform', `rotate(${rotation} 21 21)`);
+    };
+
+    rotateHand();
+    setInterval(() => rotateHand(currentMinutes()), 60000);
 </script>
 {% endblock %}

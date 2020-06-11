@@ -1,6 +1,7 @@
 import random
 import urllib.request as r
-from datetime import datetime
+import datetime as d
+from typing import Optional
 
 import pytz
 import icalendar as i
@@ -27,7 +28,7 @@ class VisualSchedule:
     title = ''
     events: [Event] = []
 
-    def __init__(self, title: str, tz: datetime.tzinfo, events: [Event]):
+    def __init__(self, title: str, tz: d.tzinfo, events: [Event]):
         self.title = title
         self.tz = tz or pytz.UTC
         self.events = events
@@ -41,7 +42,7 @@ def new_event(event: i.Event):
     )
 
 
-def get_cal_tz(cal: i.Calendar) -> pytz.tzinfo:
+def get_cal_tz(cal: i.Calendar) -> Optional[d.tzinfo]:
     try:
         return cal.walk('vtimezone')[0].to_tz()
     except KeyError:
@@ -52,11 +53,11 @@ def todays_events(cal: i.Calendar) -> [i.Event]:
     return [new_event(event) for event in cal.walk('vevent') if is_today(event, get_cal_tz(cal))]
 
 
-def is_today(event: i.Event, tz=pytz.utc) -> bool:
-    return event_occurs_on_day(event, datetime.now(tz=tz))
+def is_today(event: i.Event, tz=pytz.UTC) -> bool:
+    return event_occurs_on_day(event, d.datetime.now(tz=tz))
 
 
-def event_occurs_on_day(event: i.Event, day: datetime) -> bool:
+def event_occurs_on_day(event: i.Event, day: d.datetime) -> bool:
     if 'rrule' not in event:
         return event.decoded('dtstart') < day
 
