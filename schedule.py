@@ -34,9 +34,21 @@ class VisualSchedule:
 def vevent_to_event(vevent: i.Event):
     return Event(
         vevent.get('summary'),
-        vevent.decoded('dtstart'),
-        vevent.decoded('dtend')
+        normalize_dt(vevent.decoded('dtstart')),
+        normalize_dt(vevent.decoded('dtend'))
     )
+
+
+def normalize_dt(dt) -> d.datetime:
+    """Make sure the date is a tz-aware instance of datetime.datetime"""
+
+    # TODO make sure it's tz-aware
+
+    if type(dt) is d.date:
+        # turn it into a datetime with time of 0
+        return d.datetime.combine(dt, d.time())
+
+    return dt
 
 
 def get_cal_tz(ical: i.Calendar) -> Optional[d.tzinfo]:
@@ -56,7 +68,7 @@ def is_today(vevent: i.Event, tz=pytz.UTC) -> bool:
 
 def event_occurs_on_day(vevent: i.Event, day: d.datetime) -> bool:
     if 'rrule' not in vevent:
-        return vevent.decoded('dtstart') < day
+        return normalize_dt(vevent.decoded('dtstart')) < day
 
     # Now we now the event is recurring
 
