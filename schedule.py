@@ -1,9 +1,8 @@
 import random
 import urllib.request as r
 import datetime as d
-from typing import Optional, List
+from typing import List
 
-import pytz
 import icalendar as i
 
 
@@ -20,60 +19,62 @@ class Event:
         return '{:%I:%M%p} - {:%I:%M%p}'.format(self.start_time, self.end_time)
 
     def new_color(self):
-        random.seed(30)
         return random.choice(self.colors)
 
 
 class VisualSchedule:
-    def __init__(self, title: str, tz: d.tzinfo, events: List[Event]):
+    def __init__(self, title: str, events: List[Event]):
         self.title = title
-        self.tz = tz or pytz.UTC
         self.events = events
 
 
 def vevent_to_event(vevent: i.Event):
-    return Event(
-        vevent.get('summary'),
-        normalize_dt(vevent.decoded('dtstart')),
-        normalize_dt(vevent.decoded('dtend'))
-    )
+    start = vevent_start(vevent)
+    end = vevent_end(vevent)
+
+    return Event(vevent.get('summary'), start, end)
 
 
 def normalize_dt(dt) -> d.datetime:
-    """Make sure the date is a tz-aware instance of datetime.datetime"""
-
-    # TODO make sure it's tz-aware
-
     if type(dt) is d.date:
         # turn it into a datetime with time of 0
-        return d.datetime.combine(dt, d.time())
+        return d.datetime.combine(dt, d.time(tzinfo=None))
 
-    return dt
+    return dt.replace(tzinfo=None)
 
 
-def get_cal_tz(ical: i.Calendar) -> Optional[d.tzinfo]:
+def vevent_start(vevent):
+    return normalize_dt(vevent.decoded('dtstart'))
+
+
+def vevent_end(vevent: i.Event) -> d.datetime:
     try:
-        return ical.walk('vtimezone')[0].to_tz()
+        return normalize_dt(vevent.decoded('dtend'))
     except KeyError:
-        return None
+        return vevent_start(vevent)
 
 
 def todays_events(ical: i.Calendar) -> List[i.Event]:
-    return [vevent_to_event(vevent) for vevent in ical.walk('vevent') if is_today(vevent, get_cal_tz(ical))]
+    return [vevent_to_event(vevent) for vevent in ical.walk('vevent') if is_today(vevent)]
 
 
-def is_today(vevent: i.Event, tz=pytz.UTC) -> bool:
-    return event_occurs_on_day(vevent, d.datetime.now(tz=tz))
+def is_today(vevent: i.Event) -> bool:
+    return event_occurs_on_day(vevent, d.datetime.now())
 
 
 def event_occurs_on_day(vevent: i.Event, day: d.datetime) -> bool:
     if 'rrule' not in vevent:
-        return normalize_dt(vevent.decoded('dtstart')) < day
+        return vevent_start(vevent) <= day < vevent_end(vevent)
 
     # Now we now the event is recurring
 
-    # if end and end is before today (for VEVENTS check UNTIL or COUNT)
-    #     return False
+    try:
+        recur_end = normalize_dt(vevent['rrule']['until'][0])
+    except KeyError:
+        recur_end = None
+
+    if recur_end and recur_end < day:
+        return False
 
     frequency = vevent['rrule']['freq'][0]
 
@@ -106,4 +107,4 @@ def get_ical_from_link(link: str) -> i.Calendar:
 
 def get_schedule_from_link(link: str) -> VisualSchedule:
     ical = get_ical_from_link(link)
-    return VisualSchedule(ical.get('X-WR-CALNAME'), get_cal_tz(ical), todays_events(ical))
+    return VisualSchedule(ical.get('X-WR-CALNAME'), todays_events(ical))
