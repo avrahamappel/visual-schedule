@@ -3,7 +3,7 @@ import urllib.request as r
 import datetime as d
 from typing import List
 
-import icalendar as i
+import ics as i
 
 
 class Event:
@@ -32,7 +32,7 @@ def vevent_to_event(vevent: i.Event):
     start = vevent_start(vevent)
     end = vevent_end(vevent)
 
-    return Event(vevent.get('summary'), start, end)
+    return Event(vevent.name, start, end)
 
 
 def normalize_dt(dt) -> d.datetime:
@@ -44,67 +44,32 @@ def normalize_dt(dt) -> d.datetime:
 
 
 def vevent_start(vevent):
-    return normalize_dt(vevent.decoded('dtstart'))
+    return normalize_dt(vevent.begin)
 
 
 def vevent_end(vevent: i.Event) -> d.datetime:
     try:
-        return normalize_dt(vevent.decoded('dtend'))
+        return normalize_dt(vevent.end)
     except KeyError:
         return vevent_start(vevent)
 
 
-def todays_events(ical: i.Calendar) -> List[i.Event]:
-    return [vevent_to_event(vevent) for vevent in ical.walk('vevent') if is_today(vevent)]
+def todays_events(ical: i.Calendar) -> List[Event]:
+    return [vevent_to_event(vevent) for vevent in ical.timeline.today()]
 
 
-def is_today(vevent: i.Event) -> bool:
-    return event_occurs_on_day(vevent, d.datetime.now())
+def ical_name(ical: i.Calendar) -> str:
+    return next((x.value for x in ical.extra if x.name == 'X-WR-CALNAME'), '')
 
 
-def event_occurs_on_day(vevent: i.Event, day: d.datetime) -> bool:
-    if 'rrule' not in vevent:
-        return vevent_start(vevent) <= day < vevent_end(vevent)
-
-    # Now we now the event is recurring
-
-    try:
-        recur_end = normalize_dt(vevent['rrule']['until'][0])
-    except KeyError:
-        recur_end = None
-
-    if recur_end and recur_end < day:
-        return False
-
-    frequency = vevent['rrule']['freq'][0]
-
-    if frequency == 'DAILY':
-        return True
-
-    if frequency == 'WEEKLY':
-        return int_to_weekday_str(day.weekday()) in vevent['rrule']['byday']
-
-    return False
-
-
-def int_to_weekday_str(day: int) -> str:
-    return {
-        0: 'MO',
-        1: 'TU',
-        2: 'WE',
-        3: 'TH',
-        4: 'FR',
-        5: 'SA',
-        6: 'SU',
-    }[day]
-
-
-def get_ical_from_link(link: str) -> i.Calendar:
-    # Download the calendar and display today's events
+def fetch_link(link: str) -> str:
     res = r.urlopen(link)
-    return i.Calendar.from_ical(res.read())
+    body = res.read()
+    if type(body) is bytes:
+        body = body.decode()
+    return body
 
 
 def get_schedule_from_link(link: str) -> VisualSchedule:
-    ical = get_ical_from_link(link)
-    return VisualSchedule(ical.get('X-WR-CALNAME'), todays_events(ical))
+    ical = i.Calendar(fetch_link(link))
+    return VisualSchedule(ical_name(ical), todays_events(ical))
